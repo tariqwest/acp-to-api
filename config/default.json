@@ -1,0 +1,66 @@
+{
+  "host": "127.0.0.1",
+  "port": 8787,
+  "authToken": null,
+  "defaultCwd": null,
+  "permissionMode": "auto_allow",
+  "pool": {
+    "maxGlobal": 8,
+    "maxPerAgent": 2,
+    "idleTtlMs": 300000
+  },
+  "agents": {
+    "opencode": {
+      "enabled": true,
+      "command": "opencode",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": [
+        "oc"
+      ]
+    },
+    "devin": {
+      "enabled": true,
+      "command": "devin",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "oz": {
+      "enabled": true,
+      "command": "node",
+      "args": [
+        "/Users/tariqwest/Developer/oz-acp/bin/oz-acp.mjs"
+      ],
+      "env": {},
+      "aliases": [
+        "oz-acp",
+        "warp"
+      ]
+    },
+    "agy": {
+      "enabled": true,
+      "command": "agy-acp",
+      "args": [],
+      "env": {},
+      "aliases": [
+        "agy-acp",
+        "antigravity"
+      ]
+    },
+    "fm": {
+      "enabled": true,
+      "command": "fm-acp",
+      "args": [],
+      "env": {},
+      "aliases": [
+        "fm-acp",
+        "foundation"
+      ]
+    }
+  }
+}

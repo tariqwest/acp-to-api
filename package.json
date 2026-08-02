@@ -1,0 +1,71 @@
+{
+  "name": "acp-to-api",
+  "version": "0.1.0",
+  "description": "OpenAI-compatible REST gateway for local ACP (Agent Client Protocol) agents",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "acp-to-api": "./bin/acp-to-api.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "config",
+    "scripts/smoke-matrix.mjs",
+    "README.md",
+    "LICENSE",
+    "!src/**/*.test.ts"
+  ],
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.1.0"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "smoke": "bun scripts/smoke-matrix.mjs",
+    "release": "bun scripts/release.mjs",
+    "release:dry": "bun scripts/release.mjs --dry-run",
+    "formula": "bun scripts/generate-homebrew-formula.mjs",
+    "formula:write": "bun scripts/generate-homebrew-formula.mjs --write Formula/acp-to-api.rb",
+    "prepack": "bun run typecheck",
+    "prepublishOnly": "bun run typecheck"
+  },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "^1.3.0",
+    "hono": "^4.12.33",
+    "tsx": "^4.23.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.9.3"
+  },
+  "author": "Tariq West",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tariqwest/acp-to-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tariqwest/acp-to-api/issues"
+  },
+  "homepage": "https://github.com/tariqwest/acp-to-api#readme",
+  "keywords": [
+    "acp",
+    "agent-client-protocol",
+    "openai",
+    "openai-compatible",
+    "gateway",
+    "hono",
+    "opencode",
+    "devin",
+    "rest",
+    "llm"
+  ],
+  "packageManager": "bun@1.3.14",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
