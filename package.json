@@ -12,9 +12,13 @@
     "src",
     "config",
     "scripts/smoke-matrix.mjs",
+    "scripts/release.mjs",
+    "scripts/generate-homebrew-formula.mjs",
+    "Formula/acp-to-api.rb",
     "README.md",
     "LICENSE",
-    "!src/**/*.test.ts"
+    "!src/**/*.test.ts",
+    "!Formula/*"
   ],
   "engines": {
     "node": ">=20",
