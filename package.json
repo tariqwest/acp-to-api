@@ -1,6 +1,6 @@
 {
   "name": "acp-to-api",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenAI-compatible REST gateway for local ACP (Agent Client Protocol) agents",
   "type": "module",
   "license": "MIT",
