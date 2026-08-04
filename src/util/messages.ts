@@ -92,7 +92,7 @@ const PATH_RE = /(?:^|[\s"'`(=])((?:\/|~\/)[^\s"'`<>|]+)/g;
 export function extractExistingPaths(text: string): string[] {
   const found: string[] = [];
   for (const match of text.matchAll(PATH_RE)) {
-    const raw = (match[1] ?? "").replace(/[.,;:!?)\]]+$/, "");
+    const raw = (match[1] ?? "").replace(/[.,;:!?)\\]]+$/, "");
     if (!raw) continue;
     const expanded = raw.startsWith("~/") ? resolve(process.env.HOME ?? "", raw.slice(2)) : raw;
     try {
@@ -119,24 +119,44 @@ export function commonExistingParent(paths: string[]): string | null {
   const common: string[] = [];
   for (let i = 0; i < minLen; i++) {
     const seg = parts[0]?.[i];
-    if (!seg || parts.some((p) => p[i] !== seg)) break;
+    if (!seg) break;
+    let match = true;
+    for (let j = 1; j < parts.length; j++) {
+      if (parts[j]?.[i] !== seg) {
+        match = false;
+        break;
+      }
+    }
+    if (!match) break;
     common.push(seg);
   }
-  if (!common.length) return dirs[0] ?? null;
-  const candidate = "/" + common.join("/");
-  return existsSync(candidate) ? candidate : (dirs[0] ?? null);
+  return "/" + common.join("/");
 }
 
-export function resolveCwd(options: {
-  explicit?: string | null;
-  messages: ChatMessage[];
-  fallback: string;
+export function resolveCwd(opts: {
+  explicit?: string;
+  messages?: ChatMessage[];
+  fallback?: string;
 }): string {
-  if (options.explicit?.trim()) {
-    const p = resolve(options.explicit.trim().replace(/^~(?=\/)/, process.env.HOME ?? ""));
-    if (existsSync(p)) return p;
+  if (opts.explicit && typeof opts.explicit === "string") {
+    const raw = opts.explicit.trim();
+    if (raw) {
+      const expanded =
+        raw.startsWith("~/") || raw === "~"
+          ? resolve(process.env.HOME ?? "", raw.startsWith("~/") ? raw.slice(2) : "")
+          : resolve(raw);
+      if (existsSync(expanded)) {
+        try {
+          return statSync(expanded).isFile() ? dirname(expanded) : expanded;
+        } catch {
+          return expanded;
+        }
+      }
+    }
   }
-  const blobs = (options.messages ?? []).map((m) => contentToText(m.content)).filter(Boolean);
-  const paths = blobs.flatMap((b) => extractExistingPaths(b));
-  return commonExistingParent(paths) ?? options.fallback;
+  const text = messagesToPrompt(opts.messages ?? []);
+  const paths = extractExistingPaths(text);
+  const inferred = commonExistingParent(paths);
+  if (inferred) return inferred;
+  return opts.fallback ?? process.cwd();
 }

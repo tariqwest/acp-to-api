@@ -3,7 +3,7 @@
 OpenAI-compatible REST gateway for local [Agent Client Protocol](https://agentclientprotocol.com) agents.
 
 ```text
-OpenAI clients → Hono /v1/* → ACP stdio agents (opencode, devin, oz-acp, agy-acp, fm-acp)
+OpenAI clients → Hono /v1/* → ACP stdio agents (opencode, devin)
 ```
 
 ## Requirements
@@ -14,16 +14,30 @@ OpenAI clients → Hono /v1/* → ACP stdio agents (opencode, devin, oz-acp, agy
 | Agent id | Default launch |
 |---|---|
 | `opencode` | `opencode acp` |
+| `claude` | `claude acp` |
+| `codex` | `codex acp` |
+| `cursor` | `cursor-agent acp` |
 | `devin` | `devin acp` |
-| `oz` | `node …/oz-acp/bin/oz-acp.mjs` |
-| `agy` | `agy-acp` |
-| `fm` | `fm-acp` |
+| `goose` | `goose acp` |
+| `copilot` | `copilot acp` |
+| `kiro` | `kiro-cli acp` |
+| `grok` | `grok acp` |
+| `qoder` | `qodercli acp` |
+| `junie` | `junie acp` |
+| `aider` | `aider acp` |
+| `cline` | `cline acp` |
+| `amp` | `amp acp` |
+| `droid` | `droid acp` |
 
 ## Quick start
 
 ```bash
 cd ~/Developer/acp-to-api
 bun install
+
+# Automatically detect local ACP clients and set up config.toml
+bun run start init
+
 bun run start
 ```
 
@@ -67,11 +81,58 @@ SMOKE_AGENTS=opencode,devin,agy bun run smoke
 
 Environment-dependent results: opencode/devin/agy typically OK; oz needs Warp AI plan or BYO inference; fm needs healthy Terminal-hosted `fm serve`.
 
-## Config env
+## Configuration
+
+### Auto-initialize config.toml
+
+Run `acp-to-api init` (or `bun run start init`) to scan your system for available built-in ACP agents (`opencode`, `devin`) and interactively copy their configurations to your `config.toml`:
+
+```bash
+acp-to-api init
+# or pass --yes to auto-enable all detected clients without prompting:
+acp-to-api init --yes
+```
+
+### TOML Config ($XDG_CONFIG_HOME)
+
+The gateway client registry and server settings can be configured via a TOML file placed in `$XDG_CONFIG_HOME/acp-to-api/config.toml` (defaults to `~/.config/acp-to-api/config.toml`).
+
+```toml
+host = "*********"
+port = 8787
+permission_mode = "auto_allow"
+discover_models = true
+discover_timeout_ms = 12000
+catalog_cache = "~/.cache/acp-to-api/models-catalog.json"
+catalog_cache_ttl_ms = 86400000
+debug_updates = false
+
+[pool]
+max_global = 8
+max_per_agent = 2
+idle_ttl_ms = 300000
+
+[agents.opencode]
+enabled = true
+command = "opencode"
+args = ["acp"]
+aliases = ["oc"]
+
+[agents.myagent]
+enabled = true
+command = "my-agent-cli"
+args = ["--acp"]
+aliases = ["ma"]
+default_model = "claude-3-5-sonnet"
+cwd = "~/projects/myagent"
+```
+
+### Config env
 
 | Env | Purpose |
 |---|---|
-| `ACP_TO_API_HOST` | bind host (default `127.0.0.1`) |
+| `ACP_TO_API_CONFIG` | custom config file path (overrides XDG path) |
+| `ACP_TO_API_HOST` | bind host (default `*********`) |
 | `ACP_TO_API_PORT` | port (default `8787`) |
 | `ACP_TO_API_TOKEN` | optional Bearer token |
 | `ACP_TO_API_CWD` | default workspace |
