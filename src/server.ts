@@ -78,6 +78,7 @@ export function createApp(ctx: AppContext) {
     const explicitCwd =
       (typeof meta.cwd === "string" && meta.cwd) ||
       (typeof meta.workspace_path === "string" && meta.workspace_path) ||
+      spec.cwd ||
       ctx.config.defaultCwd;
 
     const messages = req.messages as ChatMessage[];

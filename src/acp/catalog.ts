@@ -1,18 +1,8 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { AppConfig, CatalogModel } from "../types.ts";
+import type { AgentSpec, AppConfig, CatalogModel } from "../types.ts";
 import type { Registry } from "../adapters/registry.ts";
 import { openAcpSession } from "./client.ts";
-
-const DISCOVER_TIMEOUT_MS = Number(process.env.ACP_TO_API_DISCOVER_TIMEOUT_MS ?? 12_000);
-const DISCOVER =
-  process.env.ACP_TO_API_DISCOVER_MODELS === undefined
-    ? true
-    : !["0", "false", "no"].includes(process.env.ACP_TO_API_DISCOVER_MODELS.toLowerCase());
-const CACHE_PATH =
-  process.env.ACP_TO_API_CATALOG_CACHE ??
-  join(process.env.HOME ?? "/tmp", ".cache", "acp-to-api", "models-catalog.json");
-const CACHE_TTL_MS = Number(process.env.ACP_TO_API_CATALOG_CACHE_TTL_MS ?? 24 * 60 * 60 * 1000);
 
 interface CacheFile {
   version: 1;
@@ -52,9 +42,9 @@ export class ModelCatalog {
         `[catalog] loaded ${cached.models.length} cached model(s); baseline agents: ${available.join(", ")}`,
       );
       const age = Date.now() - cached.updatedAt;
-      if (DISCOVER && age > CACHE_TTL_MS) {
+      if (this.config.discoverModels && age > this.config.catalogCacheTtlMs) {
         void this.refreshInBackground("cache-stale");
-      } else if (DISCOVER && age <= CACHE_TTL_MS) {
+      } else if (this.config.discoverModels && age <= this.config.catalogCacheTtlMs) {
         // still refresh in background occasionally to pick up new agents
         void this.refreshInBackground("cache-warm");
       }
@@ -62,7 +52,7 @@ export class ModelCatalog {
     }
 
     this.models = baseline;
-    if (DISCOVER) void this.refreshInBackground("cold");
+    if (this.config.discoverModels) void this.refreshInBackground("cold");
   }
 
   /** Blocking full refresh (used by tests / admin). */
@@ -89,7 +79,7 @@ export class ModelCatalog {
     const available = await this.registry.detectAvailable();
     const next: CatalogModel[] = available.map((id) => this.agentDefault(id));
 
-    if (DISCOVER) {
+    if (this.config.discoverModels) {
       // parallel discovery with per-agent timeout
       await Promise.all(
         available.map(async (agentId) => {
@@ -97,8 +87,13 @@ export class ModelCatalog {
           if (!spec) return;
           try {
             const models = await withTimeout(
-              discoverAgentModels(spec, this.config.defaultCwd ?? process.cwd()),
-              DISCOVER_TIMEOUT_MS,
+              discoverAgentModels(
+                spec,
+                spec.cwd ?? this.config.defaultCwd ?? process.cwd(),
+                this.config.permissionMode,
+                this.config.debugUpdates,
+              ),
+              this.config.discoverTimeoutMs,
               `discover ${agentId}`,
             );
             for (const m of models) {
@@ -149,7 +144,7 @@ export class ModelCatalog {
 
   private async readCache(): Promise<CacheFile | null> {
     try {
-      const file = Bun.file(CACHE_PATH);
+      const file = Bun.file(this.config.catalogCache);
       if (!(await file.exists())) return null;
       const data = (await file.json()) as CacheFile;
       if (!data || data.version !== 1 || !Array.isArray(data.models)) return null;
@@ -161,9 +156,9 @@ export class ModelCatalog {
 
   private async writeCache(models: CatalogModel[]): Promise<void> {
     try {
-      await mkdir(dirname(CACHE_PATH), { recursive: true });
+      await mkdir(dirname(this.config.catalogCache), { recursive: true });
       const payload: CacheFile = { version: 1, updatedAt: Date.now(), models };
-      await Bun.write(CACHE_PATH, JSON.stringify(payload));
+      await Bun.write(this.config.catalogCache, JSON.stringify(payload));
     } catch (err) {
       console.error(`[catalog] cache write failed: ${String(err)}`);
     }
@@ -171,8 +166,10 @@ export class ModelCatalog {
 }
 
 async function discoverAgentModels(
-  spec: { agentId: string; command: string; args: string[]; env: Record<string, string>; bootstrapCommands: string[] },
+  spec: AgentSpec,
   cwd: string,
+  permissionMode: AppConfig["permissionMode"] = "deny",
+  debugUpdates?: boolean,
 ): Promise<Array<{ id: string; name?: string }>> {
   const handle = await openAcpSession({
     spec: {
@@ -184,7 +181,8 @@ async function discoverAgentModels(
       defaultModel: undefined,
     },
     cwd,
-    permissionMode: "deny",
+    permissionMode,
+    debugUpdates,
   });
   try {
     return handle.discoveredModels ?? [];

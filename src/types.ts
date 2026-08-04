@@ -13,6 +13,7 @@ export interface AgentConfig {
   command: string;
   args: string[];
   env?: Record<string, string>;
+  cwd?: string;
   aliases?: string[];
   bootstrapCommands?: string[];
   defaultModel?: string;
@@ -25,6 +26,11 @@ export interface AppConfig {
   defaultCwd: string | null;
   permissionMode: PermissionMode;
   pool: PoolConfig;
+  discoverModels: boolean;
+  discoverTimeoutMs: number;
+  catalogCache: string;
+  catalogCacheTtlMs: number;
+  debugUpdates: boolean;
   agents: Record<AgentId, AgentConfig>;
 }
 
@@ -33,6 +39,7 @@ export interface AgentSpec {
   command: string;
   args: string[];
   env: Record<string, string>;
+  cwd?: string;
   bootstrapCommands: string[];
   defaultModel?: string;
 }

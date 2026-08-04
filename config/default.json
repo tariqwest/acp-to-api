@@ -2,8 +2,13 @@
   "host": "127.0.0.1",
   "port": 8787,
   "authToken": null,
-  "defaultCwd": null,
+  "defaultCwd": "~/.config/acp-to-api/cwd-acp-to-api",
   "permissionMode": "auto_allow",
+  "discoverModels": true,
+  "discoverTimeoutMs": 12000,
+  "catalogCache": null,
+  "catalogCacheTtlMs": 86400000,
+  "debugUpdates": false,
   "pool": {
     "maxGlobal": 8,
     "maxPerAgent": 2,
@@ -21,6 +26,37 @@
         "oc"
       ]
     },
+    "claude": {
+      "enabled": true,
+      "command": "claude",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": [
+        "claude-code"
+      ]
+    },
+    "codex": {
+      "enabled": true,
+      "command": "codex",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "cursor": {
+      "enabled": true,
+      "command": "cursor-agent",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": [
+        "cursor"
+      ]
+    },
     "devin": {
       "enabled": true,
       "command": "devin",
@@ -30,37 +66,101 @@
       "env": {},
       "aliases": []
     },
-    "oz": {
+    "goose": {
       "enabled": true,
-      "command": "node",
+      "command": "goose",
       "args": [
-        "/Users/tariqwest/Developer/oz-acp/bin/oz-acp.mjs"
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "copilot": {
+      "enabled": true,
+      "command": "copilot",
+      "args": [
+        "--acp"
       ],
       "env": {},
       "aliases": [
-        "oz-acp",
-        "warp"
+        "gh-copilot"
       ]
     },
-    "agy": {
+    "kiro": {
       "enabled": true,
-      "command": "agy-acp",
-      "args": [],
+      "command": "kiro-cli",
+      "args": [
+        "acp"
+      ],
       "env": {},
       "aliases": [
-        "agy-acp",
-        "antigravity"
+        "kiro"
       ]
     },
-    "fm": {
+    "grok": {
       "enabled": true,
-      "command": "fm-acp",
-      "args": [],
+      "command": "grok",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "qoder": {
+      "enabled": true,
+      "command": "qodercli",
+      "args": [
+        "acp"
+      ],
       "env": {},
       "aliases": [
-        "fm-acp",
-        "foundation"
+        "qoder"
       ]
+    },
+    "junie": {
+      "enabled": true,
+      "command": "junie",
+      "args": [
+        "--acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "aider": {
+      "enabled": true,
+      "command": "aider",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "cline": {
+      "enabled": true,
+      "command": "cline",
+      "args": [
+        "--acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "amp": {
+      "enabled": true,
+      "command": "amp",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
+    },
+    "droid": {
+      "enabled": true,
+      "command": "droid",
+      "args": [
+        "acp"
+      ],
+      "env": {},
+      "aliases": []
     }
   }
 }

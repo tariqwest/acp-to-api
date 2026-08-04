@@ -36,9 +36,11 @@ export async function openAcpSession(options: {
   permissionMode: PermissionMode;
   mcpServers?: unknown[];
   clientKey?: string;
+  debugUpdates?: boolean;
 }): Promise<AcpSessionHandle> {
   const { spec, cwd, permissionMode, clientKey } = options;
-  const child = spawn(spec.command, spec.args, {
+  const resolvedArgs = spec.args.map((arg) => arg.replaceAll("{cwd}", cwd));
+  const child = spawn(spec.command, resolvedArgs, {
     stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env, ...spec.env },
     cwd,
@@ -121,7 +123,8 @@ export async function openAcpSession(options: {
     },
     async sessionUpdate(params) {
       const update = (params as { update?: unknown }).update ?? params;
-      if (process.env.ACP_TO_API_DEBUG_UPDATES === "1") {
+      const debug = options.debugUpdates ?? (process.env.ACP_TO_API_DEBUG_UPDATES === "1");
+      if (debug) {
         try {
           console.error(`[acp:${spec.agentId}:update] ${JSON.stringify(update).slice(0, 500)}`);
         } catch {

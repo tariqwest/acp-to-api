@@ -48,6 +48,7 @@ export class SessionPool {
       cwd: options.cwd,
       permissionMode: options.permissionMode,
       clientKey: options.clientKey,
+      debugUpdates: this.config.debugUpdates,
     });
     await handle.applyModel(options.model);
     this.items.push({ handle, busy: true });

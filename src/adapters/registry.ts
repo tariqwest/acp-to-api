@@ -116,6 +116,7 @@ function toSpec(agentId: string, cfg: AgentConfig): AgentSpec {
     command: cfg.command,
     args: [...(cfg.args ?? [])],
     env: { ...(cfg.env ?? {}) },
+    ...(cfg.cwd !== undefined ? { cwd: cfg.cwd } : {}),
     bootstrapCommands: [...(cfg.bootstrapCommands ?? [])],
     defaultModel: cfg.defaultModel,
   };
