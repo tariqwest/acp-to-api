@@ -3,8 +3,34 @@ import { Registry } from "./adapters/registry.ts";
 import { SessionPool } from "./acp/pool.ts";
 import { ModelCatalog } from "./acp/catalog.ts";
 import { createApp } from "./server.ts";
+import { runInit } from "./init.ts";
 
 async function main() {
+  const args = process.argv.slice(2);
+  const command = args[0];
+
+  if (command === "init" || command === "--init") {
+    await runInit(args.slice(1));
+    return;
+  }
+  if (command === "help" || command === "--help" || command === "-h") {
+    console.log(`acp-to-api - OpenAI-compatible REST gateway for local ACP agents
+
+Usage:
+  acp-to-api [command] [options]
+
+Commands:
+  (default)       Start the API server gateway
+  init            Initialize config.toml with detected local ACP agents
+  help            Show this help message
+
+Options for init:
+  -y, --yes       Automatically enable all detected ACP agents without prompting
+  --config <path> Custom path for config.toml
+`);
+    return;
+  }
+
   const config = await loadConfig();
   const registry = new Registry(config);
   const pool = new SessionPool(config);
