@@ -15,6 +15,16 @@ class AcpToApi < Formula
     system "npm", "install", *std_npm_args
   end
 
+  service do
+    run [opt_bin/"acp-to-api"]
+    keep_alive true
+    require_root false
+    log_path var/"log/acp-to-api.log"
+    error_log_path var/"log/acp-to-api.error.log"
+    working_dir HOMEBREW_PREFIX
+    environment_variables ACP_TO_API_HOST: "*********", ACP_TO_API_PORT: "8787"
+  end
+
   def caveats
     <<~EOS
       acp-to-api is an OpenAI-compatible REST gateway for local ACP agents.
@@ -23,7 +33,13 @@ class AcpToApi < Formula
 
         #{bin}/acp-to-api
 
-      Defaults to http://127.0.0.1:8787. Useful env vars:
+      Or run it as a managed service with Homebrew services:
+
+        brew services start acp-to-api
+        brew services stop acp-to-api
+        brew services restart acp-to-api
+
+      Defaults to http://*********:8787. Useful env vars:
 
         ACP_TO_API_HOST
         ACP_TO_API_PORT
