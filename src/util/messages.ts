@@ -134,7 +134,7 @@ export function commonExistingParent(paths: string[]): string | null {
 }
 
 export function resolveCwd(opts: {
-  explicit?: string;
+  explicit?: string | null;
   messages?: ChatMessage[];
   fallback?: string;
 }): string {
