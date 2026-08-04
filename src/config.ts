@@ -1,8 +1,11 @@
 import { resolve, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parse as parseToml } from "smol-toml";
 import type { AgentConfig, AppConfig, PermissionMode, PoolConfig } from "./types.ts";
+import { fileExists, fileReadText } from "./util/runtime.ts";
 
-const DEFAULT_CONFIG_PATH = resolve(import.meta.dir, "../config/default.json");
+const __dirname = import.meta.dirname ?? (typeof (import.meta as any).dir !== "undefined" ? (import.meta as any).dir : fileURLToPath(new URL(".", import.meta.url)));
+const DEFAULT_CONFIG_PATH = resolve(__dirname, "../config/default.json");
 
 export function getXdgConfigPath(): string {
   const xdgHome = process.env.XDG_CONFIG_HOME;
@@ -176,9 +179,8 @@ export function normalizeConfig(raw: any): Partial<AppConfig> {
 }
 
 export async function loadDefaultConfigRaw(): Promise<any> {
-  const baseFile = Bun.file(DEFAULT_CONFIG_PATH);
-  if (await baseFile.exists()) {
-    const baseText = await baseFile.text();
+  if (await fileExists(DEFAULT_CONFIG_PATH)) {
+    const baseText = await fileReadText(DEFAULT_CONFIG_PATH);
     return parseConfigFile(baseText, DEFAULT_CONFIG_PATH);
   }
   return {};
@@ -192,19 +194,17 @@ export async function loadConfig(specifiedPath?: string): Promise<AppConfig> {
 
   if (!userPath) {
     const xdgPath = getXdgConfigPath();
-    const xdgFile = Bun.file(xdgPath);
-    if (await xdgFile.exists()) {
+    if (await fileExists(xdgPath)) {
       userPath = xdgPath;
     }
   }
 
   let userNormalized: Partial<AppConfig> = {};
   if (userPath && userPath !== DEFAULT_CONFIG_PATH) {
-    const file = Bun.file(userPath);
-    if (!(await file.exists())) {
+    if (!(await fileExists(userPath))) {
       throw new Error(`Config not found: ${userPath}`);
     }
-    const text = await file.text();
+    const text = await fileReadText(userPath);
     const userRaw = parseConfigFile(text, userPath);
     userNormalized = normalizeConfig(userRaw);
   }

@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { AgentSpec, AppConfig, CatalogModel } from "../types.ts";
 import type { Registry } from "../adapters/registry.ts";
+import { fileExists, fileReadText, fileWriteText } from "../util/runtime.ts";
 import { openAcpSession } from "./client.ts";
 
 interface CacheFile {
@@ -144,10 +145,10 @@ export class ModelCatalog {
 
   private async readCache(): Promise<CacheFile | null> {
     try {
-      const file = Bun.file(this.config.catalogCache);
-      if (!(await file.exists())) return null;
-      const data = (await file.json()) as CacheFile;
-      if (!data || data.version !== 1 || !Array.isArray(data.models)) return null;
+      if (!(await fileExists(this.config.catalogCache))) return null;
+      const text = await fileReadText(this.config.catalogCache);
+      const data = JSON.parse(text) as CacheFile;
+      if (!data || !Array.isArray(data.models) || typeof data.updatedAt !== "number") return null;
       return data;
     } catch {
       return null;
@@ -156,15 +157,15 @@ export class ModelCatalog {
 
   private async writeCache(models: CatalogModel[]): Promise<void> {
     try {
-      await mkdir(dirname(this.config.catalogCache), { recursive: true });
-      const payload: CacheFile = { version: 1, updatedAt: Date.now(), models };
-      await Bun.write(this.config.catalogCache, JSON.stringify(payload));
+      const cachePath = this.config.catalogCache;
+      await mkdir(dirname(cachePath), { recursive: true });
+      const data: CacheFile = { version: 1, updatedAt: Date.now(), models };
+      await fileWriteText(cachePath, JSON.stringify(data, null, 2));
     } catch (err) {
-      console.error(`[catalog] cache write failed: ${String(err)}`);
+      console.error(`[catalog] write cache failed: ${String(err)}`);
     }
   }
 }
-
 async function discoverAgentModels(
   spec: AgentSpec,
   cwd: string,

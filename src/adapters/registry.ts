@@ -1,5 +1,5 @@
-import { which } from "bun";
 import type { AgentConfig, AgentId, AgentSpec, AppConfig, ResolvedModel } from "../types.ts";
+import { fileExists, isCommandAvailable } from "../util/runtime.ts";
 
 export class Registry {
   private readonly specs = new Map<AgentId, AgentSpec>();
@@ -96,15 +96,14 @@ export class Registry {
         // absolute/path command — assume present if file exists
         const path = spec.command === "node" ? (spec.args[0] ?? "") : spec.command;
         try {
-          if (path && (await Bun.file(path).exists())) available.push(id);
+          if (path && (await fileExists(path))) available.push(id);
           else if (spec.command === "node") available.push(id);
         } catch {
           // skip
         }
         continue;
       }
-      const found = which(spec.command);
-      if (found) available.push(id);
+      if (await isCommandAvailable(spec.command)) available.push(id);
     }
     return available;
   }

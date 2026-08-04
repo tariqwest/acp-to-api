@@ -4,6 +4,7 @@ import { SessionPool } from "./acp/pool.ts";
 import { ModelCatalog } from "./acp/catalog.ts";
 import { createApp } from "./server.ts";
 import { runInit } from "./init.ts";
+import { startServer } from "./util/runtime.ts";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -48,11 +49,7 @@ Options for init:
 
   const app = createApp({ config, registry, pool, catalog });
 
-  const server = Bun.serve({
-    hostname: config.host,
-    port: config.port,
-    fetch: app.fetch,
-  });
+  const server = await startServer(app, { host: config.host, port: config.port });
 
   console.error(`[acp-to-api] listening on http://${server.hostname}:${server.port}`);
   console.error(`[acp-to-api] OpenAI base URL: http://${server.hostname}:${server.port}/v1`);
@@ -60,7 +57,7 @@ Options for init:
   const shutdown = async () => {
     console.error("[acp-to-api] shutting down…");
     await pool.drain();
-    server.stop(true);
+    await server.stop(true);
     process.exit(0);
   };
   process.on("SIGINT", shutdown);
