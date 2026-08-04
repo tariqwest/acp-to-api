@@ -85,7 +85,7 @@ Environment-dependent results: opencode/devin/agy typically OK; oz needs Warp AI
 
 ### Auto-initialize config.toml
 
-Run `acp-to-api init` (or `bun run start init`) to scan your system for available built-in ACP agents (`opencode`, `devin`) and interactively copy their configurations to your `config.toml`:
+Run `acp-to-api init` (or `bun run start init`) to scan your system for available built-in ACP agents (`opencode`, `claude`, `codex`, `cursor`, `devin`, `goose`, `copilot`, `kiro`, `grok`, `qoder`, `junie`, `aider`, `cline`, `amp`, `droid`) and interactively copy their configurations to your `config.toml`:
 
 ```bash
 acp-to-api init
@@ -100,6 +100,7 @@ The gateway client registry and server settings can be configured via a TOML fil
 ```toml
 host = "*********"
 port = 8787
+default_cwd = "~/.config/acp-to-api/cwd-acp-to-api"
 permission_mode = "auto_allow"
 discover_models = true
 discover_timeout_ms = 12000
@@ -174,14 +175,15 @@ bun run start
 ## Scripts
 
 ```bash
-bun run start
-bun run dev
-bun run typecheck
-bun run smoke
-bun run formula                 # print Homebrew formula
-bun run formula:write           # write Formula/acp-to-api.rb
-bun run release:dry             # dry-run GitHub + npm + Homebrew
-bun run release -- 0.1.1        # real release (all channels)
+bun test                # run unit tests
+bun run start           # start gateway server
+bun run dev             # start server in watch mode
+bun run typecheck       # run TypeScript type check
+bun run smoke           # run smoke test matrix
+bun run formula         # print Homebrew formula
+bun run formula:write   # write Formula/acp-to-api.rb
+bun run release:dry     # dry-run GitHub + npm + Homebrew release
+bun run release -- 0.1.1 # real release (all channels)
 ```
 
 ## Release
