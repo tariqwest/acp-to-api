@@ -6,17 +6,55 @@ export function pickPermissionOptionId(
   const normalized = (options ?? []).map((opt) => {
     const o = opt as Record<string, unknown>;
     return {
-      optionId: String(o.optionId ?? o.option_id ?? "").trim(),
-      kind: String(o.kind ?? "").trim().toLowerCase(),
+      optionId: String(o.optionId ?? o.option_id ?? o.id ?? "").trim(),
+      kind: String(o.kind ?? o.type ?? "").trim().toLowerCase(),
+      name: String(o.name ?? o.label ?? o.description ?? "").trim().toLowerCase(),
     };
   });
 
+  // Priority 1: standard ACP permission kinds
   for (const preferred of ["allow_always", "allow_once", "proceed_always", "proceed_once"]) {
     const hit = normalized.find((o) => o.kind === preferred && o.optionId);
     if (hit) return hit.optionId;
   }
-  const allowish = normalized.find((o) => o.optionId && o.kind.includes("allow"));
-  if (allowish) return allowish.optionId;
+
+  // Priority 2: kind/type containing allow, proceed, yes, approve
+  const allowishKind = normalized.find(
+    (o) =>
+      o.optionId &&
+      (o.kind.includes("allow") ||
+        o.kind.includes("proceed") ||
+        o.kind.includes("yes") ||
+        o.kind.includes("approve")),
+  );
+  if (allowishKind) return allowishKind.optionId;
+
+  // Priority 3: name/label/description containing affirmative keywords
+  const allowishName = normalized.find(
+    (o) =>
+      o.optionId &&
+      (o.name.includes("allow") ||
+        o.name.includes("yes") ||
+        o.name.includes("approve") ||
+        o.name.includes("proceed") ||
+        o.name.includes("always") ||
+        o.name.includes("once")),
+  );
+  if (allowishName) return allowishName.optionId;
+
+  // Priority 4: first option that is not explicitly deny/reject/cancel
+  const nonDeny = normalized.find(
+    (o) =>
+      o.optionId &&
+      !o.kind.includes("deny") &&
+      !o.kind.includes("reject") &&
+      !o.kind.includes("cancel") &&
+      !o.name.includes("deny") &&
+      !o.name.includes("cancel"),
+  );
+  if (nonDeny) return nonDeny.optionId;
+
+  // Fallback: first option with a valid optionId
   return normalized.find((o) => o.optionId)?.optionId ?? null;
 }
 
