@@ -34,11 +34,13 @@
     "formula": "bun scripts/generate-homebrew-formula.mjs",
     "formula:write": "bun scripts/generate-homebrew-formula.mjs --write Formula/acp-to-api.rb",
     "prepack": "bun run typecheck",
-    "prepublishOnly": "bun run typecheck"
+    "prepublishOnly": "bun run typecheck",
+    "test": "bun test"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^1.3.0",
     "@hono/node-server": "^2.1.0",
+    "ajv": "^8.20.0",
     "hono": "^4.12.33",
     "smol-toml": "^1.7.1",
     "tsx": "^4.23.1",
