@@ -67,6 +67,9 @@ export interface CatalogModel {
     modelId?: string;
     effort?: string;
     name?: string;
+    /** Honest capability summary (ignored vs best_effort vs unsupported). */
+    capabilities?: Record<string, unknown>;
+    sampling?: Record<string, unknown>;
   };
 }
 

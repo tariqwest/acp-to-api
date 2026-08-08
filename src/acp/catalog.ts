@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { AgentSpec, AppConfig, CatalogModel } from "../types.ts";
+import { modelCardExtras } from "../openai/capabilities.ts";
 import type { Registry } from "../adapters/registry.ts";
 import { fileExists, fileReadText, fileWriteText } from "../util/runtime.ts";
 import { openAcpSession } from "./client.ts";
@@ -103,7 +104,7 @@ export class ModelCatalog {
                 object: "model",
                 created: this.created,
                 owned_by: `acp-${agentId}`,
-                metadata: { agentId, modelId: m.id, name: m.name },
+                metadata: { agentId, modelId: m.id, name: m.name, ...modelCardExtras() },
               });
             }
             console.error(`[catalog] ${agentId}: ${models.length} model option(s)`);
@@ -119,12 +120,13 @@ export class ModelCatalog {
   }
 
   private agentDefault(agentId: string): CatalogModel {
+    const extras = modelCardExtras();
     return {
       id: `acp-${agentId}`,
       object: "model",
       created: this.created,
       owned_by: `acp-${agentId}`,
-      metadata: { agentId },
+      metadata: { agentId, ...extras },
     };
   }
 
