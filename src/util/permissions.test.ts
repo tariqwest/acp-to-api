@@ -90,5 +90,30 @@ describe("permission utility", () => {
       const usage = sessionUpdateUsage(update);
       expect(usage).toEqual({ prompt_tokens: 1250, completion_tokens: 0, total_tokens: 1250 });
     });
+
+    it("parses OpenAI-shaped nested usage", () => {
+      const update = {
+        sessionUpdate: "usage_update",
+        usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 },
+      };
+      expect(sessionUpdateUsage(update)).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 4,
+        total_tokens: 14,
+      });
+    });
+
+    it("parses input_tokens/output_tokens aliases", () => {
+      const update = {
+        sessionUpdate: "usage_update",
+        input_tokens: 3,
+        output_tokens: 2,
+      };
+      expect(sessionUpdateUsage(update)).toEqual({
+        prompt_tokens: 3,
+        completion_tokens: 2,
+        total_tokens: 5,
+      });
+    });
   });
 });

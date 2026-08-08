@@ -70,15 +70,54 @@ export function sessionUpdateUsage(update: unknown): TokenUsage | null {
   if (!update || typeof update !== "object") return null;
   const data = update as Record<string, unknown>;
   const kind = String(data.sessionUpdate ?? data.session_update ?? "").trim();
-  if (kind !== "usage_update") return null;
+  if (kind !== "usage_update" && kind !== "usage") {
+    // Some agents nest usage on other updates
+    if (!("usage" in data) && data.used == null && data.prompt_tokens == null) return null;
+    if (kind && kind !== "usage_update" && kind !== "usage" && !("usage" in data)) return null;
+  }
 
-  // ACP usage_update is context-window oriented (used/size), not OpenAI prompt/completion.
-  const used = Number(data.used ?? 0);
-  if (!Number.isFinite(used) || used < 0) return null;
+  const nested =
+    data.usage && typeof data.usage === "object" ? (data.usage as Record<string, unknown>) : null;
+  const src = nested ?? data;
+
+  const num = (...keys: string[]): number | null => {
+    for (const k of keys) {
+      const v = src[k];
+      if (typeof v === "number" && Number.isFinite(v) && v >= 0) return Math.floor(v);
+      if (typeof v === "string" && v.trim() && Number.isFinite(Number(v))) {
+        const n = Math.floor(Number(v));
+        if (n >= 0) return n;
+      }
+    }
+    return null;
+  };
+
+  // Prefer explicit OpenAI-shaped fields when agents provide them.
+  let prompt = num("prompt_tokens", "input_tokens", "promptTokens", "inputTokens");
+  let completion = num(
+    "completion_tokens",
+    "output_tokens",
+    "completionTokens",
+    "outputTokens",
+  );
+  let total = num("total_tokens", "totalTokens", "tokens");
+
+  // ACP usage_update is often context-window oriented (used/size).
+  const used = num("used", "context_used", "contextUsed");
+  if (prompt == null && used != null) prompt = used;
+  if (total == null && used != null) total = used;
+
+  if (prompt == null && completion == null && total == null) return null;
+
+  prompt = prompt ?? 0;
+  completion = completion ?? 0;
+  if (total == null) total = prompt + completion;
+  if (total < prompt + completion && prompt + completion > 0) total = prompt + completion;
+
   return {
-    prompt_tokens: Math.floor(used),
-    completion_tokens: 0,
-    total_tokens: Math.floor(used),
+    prompt_tokens: prompt,
+    completion_tokens: completion,
+    total_tokens: total,
   };
 }
 
