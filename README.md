@@ -66,6 +66,46 @@ curl -s http://127.0.0.1:8787/v1/chat/completions \
 
 Pass a stable `metadata.session_id` (or `user`) so the gateway reuses the same ACP session and only forwards the latest user turn.
 
+### Capability matrix
+
+Honest feature support is exposed at:
+
+- `GET /v1/capabilities` — full matrix (`enforced` | `best_effort` | `ignored` | `unsupported`)
+- `GET /v1/models` / `GET /v1/models/:id` — each model includes `metadata.capabilities` and `metadata.sampling`
+
+### Tools protocol (best-effort)
+
+- Request `tools` + `tool_choice` are validated and injected into the ACP prompt with JSON schemas
+- Assistant replies may include OpenAI-shaped `message.tool_calls` when:
+  - the model emits a `{"tool_calls":[...]}` JSON block, or
+  - ACP tool events are mapped (when client `tools` were not supplied)
+- Full client-side tool round-trips are **not** a complete OpenAI tools runtime (agent still owns workspace tools)
+
+### Responses API subset
+
+- `POST /v1/responses` — maps `input` / `instructions` / `messages` onto the same ACP chat path
+- Returns OpenAI-ish `response` objects (`output` message + optional `function_call` items)
+- Streaming emits `response.completed` then `[DONE]` (not full Responses event taxonomy)
+
+### Finish reasons + choice metadata
+
+- `choices[0].index` is always `0` (`n` must be `1`; `n>1` returns 400)
+- `finish_reason`: `stop` | `length` | `tool_calls` | `content_filter` | `function_call` (mapped from ACP `stopReason`)
+- `logprobs` is always `null` (not available from ACP)
+- `message.refusal` set when `finish_reason` is `content_filter`
+- `usage` always present on non-stream responses; on stream, included on the final chunk unless `stream_options.include_usage: false`
+- Token counts are best-effort (ACP `usage_update` is often context `used`; completion may be estimated from text length)
+
+### Structured outputs (`response_format`)
+
+Best-effort OpenAI-compatible structured outputs over ACP agents (prompt + extract + validate — **not** constrained decoding):
+
+- `response_format: { "type": "json_object" }` — require a JSON object; canonical JSON string in `message.content`
+- `response_format: { "type": "json_schema", "json_schema": { "name", "schema", "strict?" } }` — Ajv validation against the schema
+- One automatic repair turn if the first agent reply fails validation
+- Default `strict: true` for `json_schema` (and always for `json_object`): invalid output → HTTP 400 (`structured_output_error`) after repair; set `strict: false` to soft-fail and return text
+- Streaming buffers agent text when `response_format` is set, then emits one content delta with the canonical JSON
+
 ### Usage + tool extensions
 
 - ACP `usage_update` → OpenAI `usage` (`prompt_tokens`/`total_tokens` = context `used`)
