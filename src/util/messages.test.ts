@@ -31,6 +31,12 @@ describe("messages utility", () => {
       const content = { text: "direct text" };
       expect(contentToText(content)).toBe("direct text");
     });
+
+    it("maps image_url parts to placeholders", () => {
+      expect(
+        contentToText([{ type: "image_url", image_url: { url: "https://x/y.png" } }]),
+      ).toBe("[image:https://x/y.png]");
+    });
   });
 
   describe("messagesToPrompt", () => {
@@ -49,7 +55,28 @@ describe("messages utility", () => {
       const prompt = messagesToPrompt([{ role: "user", content: "Do work" }], [
         { type: "function", function: { name: "shell_command" } },
       ]);
-      expect(prompt).toContain("Client tool hints:\nshell_command");
+      expect(prompt).toContain("shell_command");
+      expect(prompt).toContain("OpenAI client tools");
+    });
+
+    it("includes tool_call_id and assistant tool_calls in prompt", () => {
+      const prompt = messagesToPrompt([
+        {
+          role: "assistant",
+          content: "",
+          tool_calls: [
+            {
+              id: "call_1",
+              type: "function",
+              function: { name: "lookup", arguments: '{"q":"x"}' },
+            },
+          ],
+        },
+        { role: "tool", tool_call_id: "call_1", name: "lookup", content: "result" },
+      ]);
+      expect(prompt).toContain("tool_call_id=call_1");
+      expect(prompt).toContain("name=lookup");
+      expect(prompt).toContain("Tool result");
     });
   });
 
